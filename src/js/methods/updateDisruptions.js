@@ -136,8 +136,8 @@ export default function() {
       };
 
       disruption.typeIcon = this.icons[0];
-      if (disruption.type !== undefined && disruption.type !== null && disruption.type.length > 0) {
-        let typeId = parseInt(disruption.type.match(/\d+/)[0]);
+      if (disruption.type !== undefined && disruption.type.length > 0) {
+        let typeId = parseInt(disruption.type[0].match(/\d+/)[0]);
         disruption.typeIcon = this.icons.find(icon => {
           let type = this.types.find(type => type.id === typeId);
           return type !== undefined && type.icon.id === icon.id;

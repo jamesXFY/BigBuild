@@ -21,8 +21,6 @@
     <link href="https://bigbuild.vic.gov.au/_design/css/extras.css" rel="stylesheet">
     <link href="/styles/disruptions.css" rel="stylesheet">
     <link href="/styles/vue-airbnb-style-datepicker.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
     <script
     src="https://code.jquery.com/jquery-3.3.1.js"
     integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
@@ -100,22 +98,28 @@
                   </div>
                 </div>
                 <div v-for="disruption in disruptions">
-                  <!-- <button
+                  <button
                     @click="gaTracking('clicktracking', 'internal-link', 'LHS tile (type='+disruption.typeName+', id='+disruption.id+')'); selectedDisruption = disruption"
                     @mouseover="hoveredDisruption = disruption"
                     @mouseout="hoveredDisruption = {}"
                     class="location"
                     tabindex="10"
                   >
-                    <div class="location__header" style="display: inline;">
+                    <div class="location__header">
+                      <p class="date" :style="'background-color: rgba(' + disruption.typeIcon.rgbColour + ',.1);'">
+                        <span class="icon" :style="'background-image: url(' + disruption.typeIcon.url + '); background-color: ' + disruption.typeIcon.colour + ';'"></span>
+                        <span class="date--box" v-if="disruption.start_date">
+                          <span class="date--month">{{ disruption.start_date.month }}</span>
+                          <span class="date--day">{{ disruption.start_date.day }}</span>
+                        </span>
+                        <span class="date--box" v-if="disruption.end_date && JSON.stringify(disruption.start_date) !== JSON.stringify(disruption.end_date)">
+                          <span class="date--month">{{ disruption.end_date.month }}</span>
+                          <span class="date--day">{{ disruption.end_date.day }}</span>
+                        </span>
+                      </p>
                       <h4>
                         {{ disruption.name }}
                       </h4>
-                      
-                      <div>
-                        <span class="icon" :style="'background-image: url(' + disruption.typeIcon.url + '); background-color: ' + disruption.typeIcon.colour + ';'"></span>
-                      </div>
-                      
                     </div>
                     <div class="location__main">
                       <p>{{ disruption.location }}</p>
@@ -142,33 +146,7 @@
                         </tbody>
                       </table>
                     </div>
-                  </button> -->
-                  <div class = 'row disruption-card'>
-                    <div class = 'col-sm-6 disruption-desc'>
-                      <table>
-                        <tbody>
-                        <tr>
-                          <th scope="row">Impacted</th>
-                          <td>{{ disruption.typeName }}</td>
-                        </tr>
-                        <tr>
-                          <th scope="row">Key Dates</th>
-                          <td v-if="disruption.end_date">
-                            {{ disruption.start_date.month }} {{ disruption.start_date.day }}
-                            <span v-if="disruption.end_date & JSON.stringify(disruption.start_date) !== JSON.stringify(disruption.end_date)">&ndash; {{ disruption.end_date.month}} {{ disruption.end_date.day }}</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <th scope="row">Project</th>
-                          <td>{{ disruption.projectName }}</td>
-                        </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div class = 'col-sm-6 disruption-icon'>
-                      <span class="icon" :style="'background-image: url(' + disruption.typeIcon.url + '); background-color: ' + disruption.typeIcon.colour + ';'"></span>
-                    </div>
-                  </div>
+                  </button>
                 </div>
               </div>
             </div>
