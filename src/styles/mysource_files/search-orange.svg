@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="17" viewBox="0 0 16 17" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>zoom-2</title>
+  <desc>Created using Figma</desc>
+  <g id="Canvas" transform="translate(-24434 1304)">
+  <g id="zoom-2">
+  <g id="Shape">
+  <use xlink:href="#path0_fill" transform="translate(24434 -1304)" fill="#F46B15"/>
+  </g>
+  </g>
+  </g>
+  <defs>
+  <path id="path0_fill" fill-rule="evenodd" d="M 14.0996 7.09998C 14.0996 8.69995 13.5996 10.1 12.6992 11.3L 15.6992 14.4C 15.9648 14.6646 16.0547 15.0165 15.9688 15.3402C 15.9238 15.5061 15.834 15.6646 15.6992 15.8C 15.5 16 15.1992 16.1 15 16.1C 14.8008 16.1 14.5 16 14.3008 15.8L 11.3008 12.8C 10.1992 13.7 8.69922 14.2 7.09961 14.2C 3.19922 14.2 0 11 0 7.09998C 0 3.19995 3.19922 0 7.09961 0C 11 0 14.0996 3.19995 14.0996 7.09998ZM 2 7.09998C 2 9.90002 4.30078 12.1 7.09961 12.1C 9.90039 12.1 12.1992 9.90002 12.1992 7.09998C 12.1992 4.30005 9.90039 2 7.09961 2C 4.30078 2 2 4.30005 2 7.09998Z"/>
+  </defs>
+</svg>

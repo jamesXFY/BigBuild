@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Victoria Disruptions Map">
+    <meta name="apple-mobile-web-app-title" content="Victoria Disruptions Map">
+    <meta name="theme-color" content="#F46B15">
+    <meta name="msapplication-navbutton-color" content="#F46B15">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="msapplication-starturl" content="/map">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Victoria's Big Build - Disruptions Map</title>
+    <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:500,600|Open+Sans:400,400i,600,700" rel="stylesheet">
+    <link href="https://bigbuild.vic.gov.au/_design/css/site.css" rel="stylesheet">
+    <link href="https://bigbuild.vic.gov.au/_design/css/extras.css" rel="stylesheet">
+    <link href="/styles/disruptions.css" rel="stylesheet">
+    <link href="/styles/vue-airbnb-style-datepicker.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.js"
+    integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+    <script src="https://bigbuild.vic.gov.au/__data/assets/js_file/0015/218031/analytics-include-bigbuild.js"></script>
+    <script>
+      //window.disruptionsAPIEndpoint = 'http://localhost:3000/api';
+      window.disruptionsAPIEndpoint = 'https://bigbuild-staging.disruptions-app.com.au/api';
+      //window.disruptionsAPIEndpoint = 'https://bigbuild.disruptions-app.com.au/api';
+      window.disruptionsSite = 'bigBuild';
+    </script>
+  </head>
+  <body class="map">
+    <div id="main">
+
+      <div id="alert-bar" aria-hidden="false" tabindex="0" aria-role="status" onClick="document.getElementById('alert-bar').style.display = 'none';">
+          <div class="alert-bar__content">
+              <p class="text-left">ALERT: Coaches replacing trains on the Ballarat line from 28/04 to 1/05</p>
+              <button id="alert-bar__close" class="alert-bar__close" aria-controls="alert-bar">
+                  <i class="icon-cross" aria-hidden="true">×</i>
+                  <span class="sr-only">Close Alert</span>
+              </button>
+          </div>
+      </div>
+
+<!-- START MARKUP FOR MATRIX PARSE FILE -->
+
+      <div v-cloak id="disruptionMap" class="globalMap" :class="{ 'tableView': showTableView }">
+        <div :class="selectedDisruption ? 'globalMap__map active' : 'globalMap__map'" id="map"></div>
+        <div class="sidebar" data-name="sidebar">
+
+          <div class="sidebar__inner" :class="{ 'active': selectedDisruption }">
+            <div class="filter__overlay">
+              <div class="container-fluid">
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="disruptions__filters">
+                      <div class="filter filter--view filter--map">
+                        <label for="map-switch">{{ mapToggleLabel }}</label>
+                        <switches v-model="mapEnabled" color="blue"></switches>
+                        <!-- <button v-if="!showTableView" @click="$store.commit('toggleShowTableView')" class="filter__button" type="button" tabindex="2">
+                          Map off
+                        </button>
+                        <button v-if="showTableView" @click="$store.commit('toggleShowTableView')" class="filter__button" type="button" tabindex="2">
+                          Map on
+                        </button> -->
+                      </div>
+                      <div class="filter filter--view filter--sort">
+                        <label for="result_sort">Sort by: </label>
+                        <select name="result_sort" id="result_sort" v-on:change="sortBy" ref="orderBy" v-model="ordering">
+                          <option value="-priority,-updated_on">Most relevant</option>
+                          <option value="-updated_on">Latest</option>
+                          <option value="start_date">Date (oldest to latest)</option>
+                          <option value="-start_date">Date (latest to oldest)</option>
+                          <option value="name">Name (A to Z)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="disruption-list">
+              <div class="container-fluid">
+                <div class="row">
+                  <div class="col-md-12">
+                    <p class="count">
+                      {{ disruptions.length }} disruptions {{ selectedDate.value > 1 ? 'in the ' + selectedDate.label : selectedDate.label.replace(/all disruptions/, 'found') }} {{ selectedPlace !== false ? ' around ' + selectedPlace.label : '' }}
+                      &nbsp;<button
+                        v-if="selectedFilters !== false"
+                        @click="clearFilters()"
+                        class="filter__button--clear-inline"
+                      >clear search</button>
+                    </p>
+                  </div>
+                </div>
+                <div v-for="disruption in disruptions">
+                  <!-- <button
+                    @click="gaTracking('clicktracking', 'internal-link', 'LHS tile (type='+disruption.typeName+', id='+disruption.id+')'); selectedDisruption = disruption"
+                    @mouseover="hoveredDisruption = disruption"
+                    @mouseout="hoveredDisruption = {}"
+                    class="location"
+                    tabindex="10"
+                  >
+                    <div class="location__header" style="display: inline;">
+                      <h4>
+                        {{ disruption.name }}
+                      </h4>
+                      
+                      <div>
+                        <span class="icon" :style="'background-image: url(' + disruption.typeIcon.url + '); background-color: ' + disruption.typeIcon.colour + ';'"></span>
+                      </div>
+                      
+                    </div>
+                    <div class="location__main">
+                      <p>{{ disruption.location }}</p>
+                    </div>
+
+                    <div class="location__details">
+                      <table>
+                        <tbody>
+                        <tr>
+                          <th scope="row">Impacted</th>
+                          <td>{{ disruption.typeName }}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Key Dates</th>
+                          <td v-if="disruption.end_date">
+                            {{ disruption.start_date.month }} {{ disruption.start_date.day }}
+                            <span v-if="disruption.end_date & JSON.stringify(disruption.start_date) !== JSON.stringify(disruption.end_date)">&ndash; {{ disruption.end_date.month}} {{ disruption.end_date.day }}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Project</th>
+                          <td>{{ disruption.projectName }}</td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </button> -->
+                  <div class = 'row disruption-card'>
+                    <div class = 'col-sm-6 disruption-desc'>
+                      <table>
+                        <tbody>
+                        <tr>
+                          <th scope="row">Impacted</th>
+                          <td>{{ disruption.typeName }}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Key Dates</th>
+                          <td v-if="disruption.end_date">
+                            {{ disruption.start_date.month }} {{ disruption.start_date.day }}
+                            <span v-if="disruption.end_date & JSON.stringify(disruption.start_date) !== JSON.stringify(disruption.end_date)">&ndash; {{ disruption.end_date.month}} {{ disruption.end_date.day }}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Project</th>
+                          <td>{{ disruption.projectName }}</td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class = 'col-sm-6 disruption-icon'>
+                      <span class="icon" :style="'background-image: url(' + disruption.typeIcon.url + '); background-color: ' + disruption.typeIcon.colour + ';'"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="overlay" class="overlay">
+              <button @click="selectedDisruption = false" class="close__mobile" type="button">
+                <span class="icon-cross" aria-hidden="true">X</span>
+                <span class="sr-only">Close disruption</span>
+              </button>
+              <button @click="selectedDisruption = false" class="close" type="button">Back to {{ disruptions.length }} disruptions<span class="arrow"></span></button>
+              <div class="overlay__inner">
+                <div class="page-overlay">
+                  <div class="container-fluid no-padding" v-if="selectedDisruption">
+                    <div class="overlay__head">
+                      <span class="disruptionIcon icon" :style="'background-image: url(' + selectedDisruption.typeIcon.url + '); background-color: ' + selectedDisruption.typeIcon.colour + ';'"></span>
+                      <h4>
+                        {{ selectedDisruption.name }}
+                      </h4>
+                      <p class="place">{{ selectedDisruption.location }}</p>
+                      <div v-if="htmlDescription" v-html="selectedDisruption.description">
+
+                      </div>
+                      <div v-else>
+                        <p class="no-html-desc">{{selectedDisruption.description}}</p>
+                      </div>
+                    </div>
+                    <div class="overlay__footer">
+                      <table>
+                        <tbody>
+                        <tr>
+                          <th scope="row">Impacted</th>
+                          <td>{{ selectedDisruption.typeName }}</td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Key Dates</th>
+                          <td v-if="selectedDisruption.date_range" v-html="selectedDisruption.date_range"></td>
+                        </tr>
+                        <tr>
+                          <th scope="row">Project</th>
+                          <td>{{ selectedDisruption.projectName }}</td>
+                        </tr>
+                        </tbody>
+                      </table>
+
+                      <a v-on:click="gaTracking('clicktracking', 'outbound-link', 'Find your Plan B', selectedDisruption.id)" v-if="selectedDisruption.hyperlink && !selectedDisruptionHasDetour" :href="selectedDisruption.hyperlink" target="_blank" class="btn-mobile">
+                        Find your Plan B<span class="external"></span> <span class="arrow"></span>
+                      </a>
+
+                      <a v-on:click="gaTracking('clicktracking', 'internal-link', 'Find your Plan B', selectedDisruption.id)" v-if="selectedDisruptionHasDetour" @click.stop="selectedDisruptionModal = true" class="btn-mobile" href="#!">
+                        Find your Plan B <span class="arrow"></span>
+                      </a>
+
+                      <a class="btn-mobile" @click.stop.prevent="copyURLClipboard" href="#!">
+                        Copy URL <span class="link-icon"></span>
+                      </a>
+
+                      <span v-if="copiedLink" class="badge">Link has been copied to clipboard</span>
+
+                      <a v-if="selectedDisruption.typeName === 'Road'" v-on:click="gaTracking('clicktracking', 'outbound-link', 'Plan your journey (VicRoads)', selectedDisruption.id)" target="_blank" href="https://traffic.vicroads.vic.gov.au/" class="btn-mobile">
+                        VicRoads VicTraffic
+                        <span class="external"></span>
+                        <span class="arrow"></span>
+                      </a>
+
+                      <a v-else-if="selectedDisruption.typeName !== 'Walking and cycling'" v-on:click="gaTracking('clicktracking', 'outbound-link', 'Plan your journey (PTV)', selectedDisruption.id)" target="_blank" href="https://www.ptv.vic.gov.au/journey" class="btn-mobile">
+                        PTV Journey Planner
+                        <span class="external"></span>
+                        <span class="arrow"></span>
+                      </a>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Modal
+          v-if="selectedDisruptionModal"
+          :content="detourContent()"
+          @close="selectedDisruptionModal = false"
+        ></Modal>
+        <div class="navbar">
+          <form class="navbar__inner" id="search" @submit.prevent>
+            <div class="filter filter--searchSelect">
+              <p class="searchby__label">Search by:</p>
+              <input type="radio" name="searchType" value="Location" id="searchLocation" checked="checked" v-model="searchType" ><label for="searchLocation">Address</label>
+              <input type="radio" name="searchType" value="Postcode" id="searchPostcode" v-model="searchType" ><label for="searchPostcode">Postcode</label>
+              <input type="radio" name="searchType" value="Keyword" id="searchKeyword" v-model="searchType"><label for="searchKeyword">Disruption</label>
+            </div>
+            <search-input v-bind:map="map" v-on:clear-filters="clearFilters()" v-if="searchType !== 'Keyword'"></search-input>
+            <label class="search keyword--search-label" for="keyword-search" v-if="searchType == 'Keyword'">
+              <span class="icon icon-search"></span>
+              <input type="text" v-model.lazy="keyword" v-on:keyup.enter="keywordSearch" ref="search" placeholder="Keyword search" class="keyword--search form-control" id="keyword-search">
+            </label>
+            <!-- Avoid enter on input clicking map button. Easier than preventing enter event on form, and having to readd it to every button. -->
+            <button style="display: none;"></button>
+            <div :class="showAllFilters? 'filter__overlay active' : 'filter__overlay'">
+              <h3>Filter Disruptions:</h3>
+
+              <div class="filter filter--sort">
+                <select name="result_sort" id="result_sort" v-on:change="sortBy" ref="orderBy" v-model="ordering">
+                  <option value="">Most relevant</option>
+                  <option value="-id">Newest</option>
+                  <option value="start_time">Date (oldest first)</option>
+                  <option value="-start_time">Date (newest first)</option>
+                  <option value="name">Name (A-Z)</option>
+                </select>
+              </div>
+
+              <div class="filter datepicker-trigger">
+                <button id="datepicker-trigger" class="filter__button">{{ formatDates(dateOne, dateTwo) || 'Select dates' }}</button>
+                <airbnb-style-datepicker
+                  :trigger-element-id="'datepicker-trigger'"
+                  :min-date="today"
+                  :fullscreen-mobile="true"
+                  :date-one="dateOne"
+                  :date-two="dateTwo"
+                  :show-shortcuts-menu-trigger="false"
+                  v-on:date-one-selected="function(val) { dateOne = val }"
+                  v-on:date-two-selected="function(val) {  dateTwo = val }"
+                  v-on:apply="onDateRangeClose"
+                  v-on:cancelled="onDateRangeCancelled"
+                ></airbnb-style-datepicker>
+              </div>
+              <div class="filter filter--disruption" @mouseleave="showTypes = false">
+                <button class="filter__button" type="button" @click="showTypes = !showTypes" tabindex="5">
+                  Travel mode
+                </button>
+                <div class="filter__inner" v-if="showTypes">
+                  <div class="filter__item" v-for="type in types">
+                    <input
+                      :id="'disruption-type'+type.value"
+                      type="checkbox"
+                      name="disruption-type"
+                      :value="type.value"
+                      v-model="selectedTypes"
+                      tabindex="6"
+                    >
+                    <label class="main" :for="'disruption-type'+type.value">
+                      <span class="icon" :style="'background-image: url(' + type.icon.url + '); background-color: ' + type.icon.colour + ';'"></span>
+                      {{ type.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="filter filter--type" @mouseleave="showProjects = false">
+                <button class="filter__button" type="button" @click="showProjects = !showProjects" tabindex="7">
+                  Project
+                </button>
+                <div class="filter__inner" v-if="showProjects">
+                  <div class="filter__item" v-for="project in projects">
+                    <input
+                      :id="'project'+project.value"
+                      type="checkbox"
+                      name="project"
+                      :value="project.value"
+                      v-model="selectedProjects"
+                      tabindex="8"
+                    >
+                    <label class="main" :for="'project'+project.value">{{ project.label }}</label>
+                  </div>
+                </div>
+              </div>
+              <div class="filter filter--done">
+                <button @click="$store.commit('toggleShowAllFilters')" class="filter__button filter__button--done" type="button">
+                  Done
+                </button>
+                <button @click="clearFilters()" class="filter__button filter__button--clear" type="button">
+                  Clear filters
+                </button>
+              </div>
+            </div>
+            <mobile-filter
+              v-on:clear-filters="clearFilters()"
+              v-bind:selected-postcode="selectedPostcode"
+              v-bind:selected-place="selectedPlace"
+              v-bind:selected-date="selectedDate"
+              v-bind:selected-projects="selectedProjects"
+              v-bind:selected-types="selectedTypes"
+            ></mobile-filter>
+          </form>
+        </div>
+        <onboarding-modal button-text="Get started">
+          <template slot="title">
+            <span v-if="site === 'majorRoads'">About this map (major roads)</span>
+            <span v-else>About this map</span>
+          </template>
+          <template slot="content">
+            <div v-if="site === 'majorRoads'">
+              <p>Major roads information.</p>
+            </div>
+            <div v-else>
+                <p>Victoria’s Big Build provides information about travel disruptions for the major projects listed on this website.</p>
+                <p>Planned disruptions on this website may change without notice, so we encourage you to regularly check this information before making your travel choices. </p>
+                <p>There may also be other disruptions on the wider transport network that may impact your travels. You can view these by visiting the following websites: </p>
+                <ul>
+                  <li><a href="https://ptv.vic.gov.au" target="_blank">Public Transport Victoria</a> - Live travel updates and upcoming information for trains, trams and buses across Melbourne and Victoria.</li>
+                  <li><a href="https://traffic.vicroads.vic.gov.au/" target="_blank">VicTraffic</a> - Real time traffic information including planned roadworks and unplanned (emergency) road closures and traffic alerts.</li>
+                </ul>
+            </div>
+          </template>
+        </onboarding-modal>
+      </div>
+
+<!-- END MARKUP FOR MATRIX PARSE FILE -->
+
+    </div>
+  </body>
+</html>

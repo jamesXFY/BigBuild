@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="72px" height="72px" viewBox="0 0 72 72" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <circle id="path-1" cx="25" cy="25" r="25"></circle>
+    <filter x="-32.0%" y="-28.0%" width="164.0%" height="164.0%" filterUnits="objectBoundingBox" id="filter-2">
+      <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+      <feGaussianBlur stdDeviation="5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+      <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.162194293 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+    </filter>
+  </defs>
+  <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+    <g id="Group-2">
+      <g transform="translate(4.000000, 4.000000)">
+        <g id="Group-5-Copy-3" transform="translate(7.000000, 7.000000)">
+          <g id="Oval-4">
+            <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+            <use fill="#F46B15" fill-rule="evenodd" xlink:href="#path-1"></use>
+          </g>
+        </g>
+        <circle id="Oval-7-Copy" stroke-opacity="0.243574502" stroke="#F46B15" stroke-width="8" cx="32" cy="32" r="32"></circle>
+      </g>
+    </g>
+  </g>
+</svg>
